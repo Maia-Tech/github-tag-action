@@ -410,7 +410,7 @@ describe('utils', () => {
       const result = await utils.getCommits(
         'baseRef',
         'headRef',
-        'packages/api',
+        'packages/api'
       );
 
       /**
@@ -486,7 +486,7 @@ describe('utils', () => {
       const result = await utils.getCommits(
         'baseRef',
         'headRef',
-        'package.json',
+        'package.json'
       );
 
       /**
@@ -619,7 +619,7 @@ describe('utils', () => {
       const result = await utils.getCommits(
         'baseRef',
         'headRef',
-        'packages/web-app',
+        'packages/web-app'
       );
 
       /**

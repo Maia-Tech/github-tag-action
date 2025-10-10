@@ -66,6 +66,10 @@ jobs:
 
 - **dry_run** _(optional)_ - Do not perform tagging, just calculate next version and changelog, then exit
 
+#### Initial tag creation
+
+- **create_initial_tag** _(optional)_ - Create an initial tag (default: `v0.0.1`) if no tag exists in the repository (default: `false`). Useful for repositories starting to use semantic versioning.
+
 ### 📤 Outputs
 
 - **new_tag** - The value of the newly calculated tag. Note that if there hasn't been any new commit, this will be `undefined`.

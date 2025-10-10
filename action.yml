@@ -64,6 +64,10 @@ inputs:
     description: "Do not perform tagging, just calculate next version and changelog, then exit."
     required: false
     default: "false"
+  create_initial_tag:
+    description: "Create an initial tag (default: v0.0.1) if no tag exists in the repository."
+    required: false
+    default: "false"
 
 runs:
   using: "node20"

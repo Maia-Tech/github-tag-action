@@ -27,12 +27,13 @@ export default async function main() {
   const preReleaseBranches = core.getInput('pre_release_branches');
   const appendToPreReleaseTag = core.getInput('append_to_pre_release_tag');
   const createAnnotatedTag = /true/i.test(
-    core.getInput('create_annotated_tag'),
+    core.getInput('create_annotated_tag')
   );
   const dryRun = core.getInput('dry_run');
   const customReleaseRules = core.getInput('custom_release_rules');
   const shouldFetchAllTags = core.getInput('fetch_all_tags');
   const commitSha = core.getInput('commit_sha');
+  const createInitialTag = /true/i.test(core.getInput('create_initial_tag'));
 
   let mappedReleaseRules;
   if (customReleaseRules) {
@@ -72,14 +73,41 @@ export default async function main() {
 
   const validTags = await getValidTags(
     prefixRegex,
-    /true/i.test(shouldFetchAllTags),
+    /true/i.test(shouldFetchAllTags)
   );
   const latestTag = getLatestTag(validTags, prefixRegex, tagPrefix);
   const latestPrereleaseTag = getLatestPrereleaseTag(
     validTags,
     identifier,
-    prefixRegex,
+    prefixRegex
   );
+
+  // Check if we need to create an initial tag
+  if (
+    createInitialTag &&
+    latestTag.commit.sha === 'HEAD' &&
+    (isReleaseBranch || isPreReleaseBranch)
+  ) {
+    const initialTag = `${tagPrefix}0.0.1`;
+    core.info(`No existing tags found. Creating initial tag: ${initialTag}`);
+
+    if (!/true/i.test(dryRun)) {
+      await createTag(initialTag, createAnnotatedTag, commitRef);
+      core.info(`Initial tag ${initialTag} created successfully.`);
+    } else {
+      core.info(`Dry run: would create initial tag ${initialTag}.`);
+    }
+
+    // Set outputs for the initial tag
+    core.setOutput('new_tag', initialTag);
+    core.setOutput('new_version', '0.0.1');
+    core.setOutput('previous_tag', '0.0.0');
+    core.setOutput('previous_version', '0.0.0');
+    core.setOutput('release_type', 'initial');
+    core.setOutput('changelog', 'Initial release');
+
+    return;
+  }
 
   let commits: Await<ReturnType<typeof getCommits>>;
 
@@ -98,7 +126,7 @@ export default async function main() {
     } else {
       previousTag = gte(
         latestTag.name.replace(prefixRegex, ''),
-        latestPrereleaseTag.name.replace(prefixRegex, ''),
+        latestPrereleaseTag.name.replace(prefixRegex, '')
       )
         ? latestTag
         : latestPrereleaseTag;
@@ -117,7 +145,7 @@ export default async function main() {
     }
 
     core.info(
-      `Previous tag was ${previousTag.name}, previous version was ${previousVersion.version}.`,
+      `Previous tag was ${previousTag.name}, previous version was ${previousVersion.version}.`
     );
     core.setOutput('previous_version', previousVersion.version);
     core.setOutput('previous_tag', previousTag.name);
@@ -131,7 +159,7 @@ export default async function main() {
         ...rest,
       }));
       core.debug(
-        `Using release rules: ${JSON.stringify(releaseRules, null, 2)}`,
+        `Using release rules: ${JSON.stringify(releaseRules, null, 2)}`
       );
     }
 
@@ -139,7 +167,7 @@ export default async function main() {
       {
         releaseRules: releaseRules || undefined,
       },
-      { commits, logger: { log: console.info.bind(console) } },
+      { commits, logger: { log: console.info.bind(console) } }
     );
 
     // Determine if we should continue with tag creation based on main vs prerelease branch
@@ -157,7 +185,7 @@ export default async function main() {
     // Default bump is set to false and we did not find an automatic bump
     if (!shouldContinue) {
       core.debug(
-        'No commit specifies the version bump. Skipping the tag creation.',
+        'No commit specifies the version bump. Skipping the tag creation.'
       );
       return;
     }
@@ -215,14 +243,14 @@ export default async function main() {
       },
       lastRelease: { gitTag: latestTag.name },
       nextRelease: { gitTag: newTag, version: newVersion },
-    },
+    }
   );
   core.info(`Changelog is ${changelog}.`);
   core.setOutput('changelog', changelog);
 
   if (!isReleaseBranch && !isPreReleaseBranch) {
     core.info(
-      'This branch is neither a release nor a pre-release branch. Skipping the tag creation.',
+      'This branch is neither a release nor a pre-release branch. Skipping the tag creation.'
     );
     return;
   }
